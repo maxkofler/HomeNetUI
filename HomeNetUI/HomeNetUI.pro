@@ -8,7 +8,10 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        networkmanager.cpp
+        networkmanager.cpp \
+        transmissionparser.cpp \
+        weathersens.cpp \
+        wsvalue.cpp
 
 RESOURCES += qml.qrc
 
@@ -25,4 +28,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     log.h \
-    networkmanager.h
+    networkmanager.h \
+    transmissionparser.h \
+    weathersens.h \
+    wsvalue.h

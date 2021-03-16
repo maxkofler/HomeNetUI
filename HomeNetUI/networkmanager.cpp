@@ -15,23 +15,29 @@ NetworkManager::~NetworkManager(){
     }
 }
 
-int NetworkManager::open(QString ip_addr, int port){
+int NetworkManager::open(QHostAddress address, int port, int timeout){
     if (!this->m_socket.isOpen()){
         this->m_sockClosedExpected = false;
-        this->m_ip_addr = ip_addr;
+        this->m_hostaddr = address;
         this->m_port = port;
         QTimer timer;
-        connect(&timer, &QTimer::timeout, this, &NetworkManager::connectTimeout);
-        this->connectionTimeout = false;
-        connect(this, &NetworkManager::onSocketConnected, &this->connectLoop, &QEventLoop::quit);
+        QEventLoop connectLoop;
+        QElapsedTimer stop;
+
+        //Connecting dataReceived and timeout
+        connect(this, &NetworkManager::onSocketConnected, &connectLoop, &QEventLoop::quit);
+        connect(&timer, &QTimer::timeout, &connectLoop, &QEventLoop::quit);
+
 
         log->log(cN + "open()", "Waiting for socket to change to connected state...", Log::D);
-        this->m_socket.connectToHost(QHostAddress(this->m_ip_addr), this->m_port);
+        stop.start();
+        this->m_socket.connectToHost(m_hostaddr, this->m_port);
 
-        timer.start(1000);
-        this->connectLoop.exec();
+        timer.start(timeout);
+        connectLoop.exec();
+        log->log(cN + "open()", "Waiter for connection quit with " + std::to_string(timeout - stop.elapsed()) + "ms left!", Log::D3);
 
-        if (this->connectionTimeout){
+        if (stop.elapsed() >= timeout){
             log->log(cN + "open()", "Connection timed out, closing socket!", Log::E);
             this->close();
             log->sig(cN, "onSocketTimeout");
@@ -63,6 +69,32 @@ void NetworkManager::sendRequest(const char* msg){
     }
 }
 
+QString NetworkManager::sendRequestForAnswer(const char* msg, int timeout){
+    QElapsedTimer stop;
+    QEventLoop waiter;
+    QTimer timer;
+    connect(this, &NetworkManager::onDataReceived, &waiter, &QEventLoop::quit);
+    connect(&timer, &QTimer::timeout, &waiter, &QEventLoop::quit);
+
+    //Now send the request
+    sendRequest(msg);
+
+    stop.start();
+    timer.start(timeout);
+    waiter.exec();
+    log->log(cN + "open()", "Waiter for answer quit with " + std::to_string(timeout - stop.elapsed()) + "ms left!", Log::D3);
+
+    //Check if there was a timeout
+    if (stop.elapsed() >= timeout){
+        log->log(cN + "sendRequestForAnswer()", "Request timed out!", Log::W);
+        log->sig(cN, "onRequestTimeout");
+        emit onRequestTimeout();
+        return NULL;
+    }else{
+        return this->getData();
+    }
+}
+
 //
 // PUBLIC SLOTS
 //
@@ -71,7 +103,8 @@ void NetworkManager::ReadyRead(){
     this->m_data = m_socket.readAll();
     log->log(cN + "ReadyRead()", "Received data:\n|\n|\n" + this->m_data.toStdString() + "|\n|", Log::D3);
     log->sig(cN, "onDataReceived");
-    emit onDataReceived(this->m_data);
+
+    emit onDataReceived();
 }
 
 void NetworkManager::SocketClosed(bool expected){
@@ -99,13 +132,4 @@ void NetworkManager::SocketStateChanged(QAbstractSocket::SocketState state){
     }
 
     emit onSocketStateChanged(state);
-}
-
-//
-// PRIVATE SLOTS
-//
-void NetworkManager::connectTimeout(){
-    log->slot(cN, "connectTimeout(private)");
-    this->connectionTimeout = true;
-    this->connectLoop.exit();
 }

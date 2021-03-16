@@ -7,6 +7,7 @@
 #include <QHostAddress>
 #include <QEventLoop>
 #include <QTimer>
+#include <QElapsedTimer>
 
 #include "log.h"
 
@@ -18,14 +19,18 @@ public:
     ~NetworkManager();
 
     //Function to connect to a new socket
-    //  @ret        int         -1 if already connected, -2 on socket error
-    int open(QString, int);
+    //@ret        int               -1 if already connected, -2 on socket error
+    int open(QHostAddress address, int port, int timeout);
 
     //Function to close the socket
     void close();
 
     //Function to send a request to a server, answer comes in form of the "onDataReceived" signal
     void sendRequest(const char*);
+
+    //Function to send a request to a server and wait for it to answer
+    //@ret          QString     NULL on timeout
+    QString sendRequestForAnswer(const char*, int timeout);
 
     //Function to read the currently received data
     QString getData(){if (this->m_data != NULL) return this->m_data; else return NULL;}
@@ -37,13 +42,11 @@ public slots:
     void SocketClosed(bool expected);
     void SocketStateChanged(QAbstractSocket::SocketState);
 
-private slots:
-    void connectTimeout();
-
 signals:
-    void onDataReceived(QString data);
+    void onDataReceived();
     void onSocketConnected();
     void onSocketTimeout();
+    void onRequestTimeout();
     void onSocketClosed(bool expected);
     void onSocketStateChanged(QAbstractSocket::SocketState);
 
@@ -53,17 +56,13 @@ private:
 
     QTcpSocket m_socket;
 
-    QString m_ip_addr;
+    QHostAddress m_hostaddr;
     int m_port;
 
     QString m_data;
 
     //Checked when the socked has been closed expectedly
     bool m_sockClosedExpected;
-
-    //Connection
-    QEventLoop connectLoop;
-    bool connectionTimeout;
 };
 
 #endif // NETWORKMANAGER_H

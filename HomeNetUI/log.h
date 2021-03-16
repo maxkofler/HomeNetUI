@@ -25,6 +25,7 @@ public:
     const static int SIG = 7;
     const static int SLO = 8;
     const static int D3 = 9;
+    const static int CD = 10;
 
 
     //Default logging
@@ -45,6 +46,10 @@ public:
 
     void slot(std::string className, std::string slotName){
         this->log("(SLOT)", "\"" + slotName + "\" triggered in " + className.substr(0, className.length()-2) + "!", Log::SIG);
+    }
+
+    void destructor(std::string className, std::string msg){
+        this->log("(DESTRUCTOR - " + className.substr(0, className.length()-2) + ")", msg, Log::CD);
     }
 
     //Logging for program errors, like warnings for programmers
