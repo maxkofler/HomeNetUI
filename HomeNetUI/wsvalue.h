@@ -15,6 +15,8 @@ public:
 
     void parseFromString(std::string data);
 
+    std::string toString();
+
 signals:
     void onWrongTransmissionLengthError();
     void onParseError();

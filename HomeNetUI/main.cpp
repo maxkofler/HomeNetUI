@@ -10,7 +10,7 @@ static std::string queryMessage = "@va";
 
 int main(int argc, char *argv[])
 {
-    Log log(20);
+    Log log(Log::D);
 
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
@@ -20,7 +20,9 @@ int main(int argc, char *argv[])
     Weathersens ws(&log);
     ws.setAddr(QHostAddress(QString().fromStdString(ip)), port, 1000);
 
-    ws.sync();
+    if(!ws.sync()){
+        log.log("main()", "There was an error syncing to the server!", Log::E);
+    }
 
     return app.exec();
 }

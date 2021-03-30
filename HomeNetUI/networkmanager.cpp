@@ -60,16 +60,21 @@ void NetworkManager::close(){
 }
 
 
-void NetworkManager::sendRequest(const char* msg){
+bool NetworkManager::sendRequest(const char* msg){
+    std::string fN = cN + "sendRequest()";
     if (this->m_socket.isOpen()){
         this->m_socket.write(QByteArray(msg));
-        log->log(cN + "sendRequest()", "Sending message: \"" + std::string(msg) + "\"", Log::D);
+        log->log(fN, "Sending a request to the connected Server...", Log::D);
+        log->log(fN, "Sending message: \"" + std::string(msg) + "\"", Log::D2);
+        return true;
     }else{
-        log->log(cN + "sendRequest()", "The socket was not connected! The request has not been sent!", Log::E);
+        log->log(fN, "The socket was not connected! The request has not been sent!", Log::E);
+        return false;
     }
 }
 
 QString NetworkManager::sendRequestForAnswer(const char* msg, int timeout){
+    std::string fN = cN + "sendRequestForAnswer()";
     QElapsedTimer stop;
     QEventLoop waiter;
     QTimer timer;
@@ -77,21 +82,26 @@ QString NetworkManager::sendRequestForAnswer(const char* msg, int timeout){
     connect(&timer, &QTimer::timeout, &waiter, &QEventLoop::quit);
 
     //Now send the request
-    sendRequest(msg);
+    if (sendRequest(msg)){
+        stop.start();
+        timer.start(timeout);
+        waiter.exec();
+        log->log(fN, "Waiter for answer quit with " + std::to_string(timeout - stop.elapsed()) + "ms left!", Log::D3);
 
-    stop.start();
-    timer.start(timeout);
-    waiter.exec();
-    log->log(cN + "open()", "Waiter for answer quit with " + std::to_string(timeout - stop.elapsed()) + "ms left!", Log::D3);
-
-    //Check if there was a timeout
-    if (stop.elapsed() >= timeout){
-        log->log(cN + "sendRequestForAnswer()", "Request timed out!", Log::W);
-        log->sig(cN, "onRequestTimeout");
-        emit onRequestTimeout();
-        return NULL;
+        //Check if there was a timeout
+        if (stop.elapsed() >= timeout){
+            log->log(fN, "Request timed out!", Log::W);
+            log->sig(cN, "onRequestTimeout");
+            emit onRequestTimeout();
+            return NULL;
+        }else{
+            return this->getData();
+        }
     }else{
-        return this->getData();
+        log->log(fN, "Unable to send the request! (Socket was not opened properly!)", Log::E);
+        log->sig(cN, "onSocketError");
+        emit onSocketError();
+        return NULL;
     }
 }
 

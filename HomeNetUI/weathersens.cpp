@@ -20,11 +20,23 @@ void Weathersens::setAddr(QHostAddress server_address, int port, int timeout){
     this->m_timeout = timeout;
 }
 
-void Weathersens::sync(){
+bool Weathersens::sync(){
+    std::string fN = cN + "sync()";
     if (this->m_networkManager->open(this->m_server_addr, this->m_port, m_timeout) >= 0){
         std::string msg = this->m_networkManager->sendRequestForAnswer("@va", m_timeout).toStdString();
-        WSValue value(log);
-        m_values = parseValues(msg);
+        if (!msg.empty()){
+            m_values = parseValues(msg);
+            log->log(fN, "Parsed " + std::to_string(m_values.size()) + " Values!", Log::D);
+            for (int i = 0; i < (int)m_values.size(); i++){
+                log->log(fN, "[" + std::to_string(i) + "]" + m_values.at(i)->toString(), Log::D2);
+            }
+            return true;
+        }else{
+            log->log(fN, "There was an error calling the values from the Server!", Log::E);
+            return false;
+        }
+    }else{
+        return false;
     }
 }
 

@@ -17,7 +17,7 @@ public:
 
     void setAddr(QHostAddress server_address, int port, int timeout);
 
-    void sync();
+    bool sync();
 
 private:
     Log* log;

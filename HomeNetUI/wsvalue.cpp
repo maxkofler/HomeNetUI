@@ -17,7 +17,7 @@ void WSValue::parseFromString(std::string string_data){
             this->m_valueID = std::stoi(data.blocks[5]);
             this->m_value = data.blocks[6];
             this->m_valueType = data.blocks[7];
-            log->log(cN + "parseFromString()", "Parsed data successfully!", Log::D2);
+            log->log(cN + "parseFromString()", "Parsed data successfully!", Log::D3);
         }catch(const std::exception& e){
             log->log(cN + "parseFromString()", "Error in parsing data: " + std::string(e.what()), Log::E);
             log->sig(cN, "onParseError");
@@ -32,4 +32,18 @@ void WSValue::parseFromString(std::string string_data){
         log->sig(cN, "onWrongTransmissionLengthError");
         emit onWrongTransmissionLengthError();
     }
+}
+
+
+std::string WSValue::toString(){
+    std::string ret = "[WSValue]\n";
+    ret += "(driverName)" + this->m_driverName;
+    ret += "\n(driverID)" + std::to_string(this->m_driverID);
+    ret += "\n(valueName)" + this->m_valueName;
+    ret += "\n(valueUnit)" + this->m_valueUnit;
+    ret += "\n(displayType)" + this->m_displayType;
+    ret += "\n(valueID)" + std::to_string(this->m_valueID);
+    ret += "\n(value)" + this->m_value;
+    ret += "\n(valueType)" + this->m_valueType + "\n";
+    return ret;
 }

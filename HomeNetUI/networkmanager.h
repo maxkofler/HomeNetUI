@@ -26,7 +26,8 @@ public:
     void close();
 
     //Function to send a request to a server, answer comes in form of the "onDataReceived" signal
-    void sendRequest(const char*);
+    //@ret      bool            Wheter the request was successfull or not (socket opened)
+    bool sendRequest(const char*);
 
     //Function to send a request to a server and wait for it to answer
     //@ret          QString     NULL on timeout
@@ -46,6 +47,7 @@ signals:
     void onDataReceived();
     void onSocketConnected();
     void onSocketTimeout();
+    void onSocketError();
     void onRequestTimeout();
     void onSocketClosed(bool expected);
     void onSocketStateChanged(QAbstractSocket::SocketState);
