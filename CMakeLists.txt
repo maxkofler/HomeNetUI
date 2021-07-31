@@ -40,7 +40,7 @@ include_directories(hnvalues/include)
 #endif()
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Network REQUIRED)
 
 set(HEADERS
     include/mainwindow.h
@@ -80,7 +80,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(HomeNetUI PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+target_link_libraries(HomeNetUI PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network
     log
     hnnetworking
     hnvalues)

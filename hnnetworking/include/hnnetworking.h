@@ -1,8 +1,11 @@
 #ifndef __HNNETWORKING_H__
 #define __HNNETWORKING_H__
 
-class HNNetworking{
+#include "log.h"
 
+class HNNetworking{
+public:
+    HNNetworking();
 };
 
 #endif
